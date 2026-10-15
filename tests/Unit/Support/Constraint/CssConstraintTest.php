@@ -25,7 +25,7 @@ final class CssConstraintTest extends TestCase
 
         self::assertSame(
             \preg_quote($css, '/'),
-            $resultWithOtherMatchersRemoved
+            $resultWithOtherMatchersRemoved,
         );
     }
 
@@ -44,7 +44,7 @@ final class CssConstraintTest extends TestCase
     }
 
     /**
-     * @return string[][]
+     * @return array<non-empty-string, array{0: non-empty-string, 1: string}>
      */
     public function contentWithOptionalWhitespaceDataProvider(): array
     {
@@ -54,10 +54,13 @@ final class CssConstraintTest extends TestCase
             '";" alone' => [';', ''],
             '"," alone' => [',', ''],
             '":" alone' => [':', ''],
+            '">" alone' => ['>', ''],
+            '"+" alone' => ['+', ''],
+            '"~" alone' => ['~', ''],
             '"{" with non-special character' => ['{', 'a'],
             '"{" with two non-special characters' => ['{', 'a0'],
             '"{" with special character' => ['{', '.'],
-            '"{" with two special characters' => ['{', '.+'],
+            '"{" with two special characters' => ['{', '.*'],
             '"{" with special character and non-special character' => ['{', '.a'],
         ];
     }
@@ -65,8 +68,7 @@ final class CssConstraintTest extends TestCase
     /**
      * @test
      *
-     * @param string $contentToInsertAround
-     * @param string $otherContent
+     * @param non-empty-string $contentToInsertAround
      *
      * @dataProvider contentWithOptionalWhitespaceDataProvider
      */
@@ -75,7 +77,7 @@ final class CssConstraintTest extends TestCase
         string $otherContent
     ): void {
         $result = TestingCssConstraint::getCssRegularExpressionMatcherForTesting(
-            $otherContent . $contentToInsertAround . $otherContent
+            $otherContent . $contentToInsertAround . $otherContent,
         );
 
         $quotedOtherContent = \preg_quote($otherContent, '/');
@@ -96,7 +98,7 @@ final class CssConstraintTest extends TestCase
     }
 
     /**
-     * @return string[][]
+     * @return array<non-empty-string, array{0: non-empty-string}>
      */
     public function styleTagDataProvider(): array
     {
@@ -112,7 +114,7 @@ final class CssConstraintTest extends TestCase
     /**
      * @test
      *
-     * @param string $css
+     * @param non-empty-string $css
      *
      * @dataProvider styleTagDataProvider
      */
@@ -120,11 +122,11 @@ final class CssConstraintTest extends TestCase
     {
         $result = TestingCssConstraint::getCssRegularExpressionMatcherForTesting($css);
 
-        self::assertSame('\\<style\\>\\s*+a', $result);
+        self::assertStringEndsWith('>\\s*+a', $result);
     }
 
     /**
-     * @return array<string, array<string>>
+     * @return array<non-empty-string, array{0: non-empty-string}>
      */
     public function provideWhitespaceBetweenWords(): array
     {
@@ -140,7 +142,7 @@ final class CssConstraintTest extends TestCase
     /**
      * @test
      *
-     * @param string $css
+     * @param non-empty-string $css
      *
      * @dataProvider provideWhitespaceBetweenWords
      */

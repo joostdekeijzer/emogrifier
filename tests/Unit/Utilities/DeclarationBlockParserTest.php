@@ -34,6 +34,10 @@ final class DeclarationBlockParserTest extends TestCase
                 'name' => '--base-size-16',
                 'expect' => '--base-size-16',
             ],
+            'custom property with everything' => [
+                'name' => '--Base_size-4u',
+                'expect' => '--Base_size-4u',
+            ],
             'standard property with some uppercase' => [
                 'name' => 'cOlOr',
                 'expect' => 'color',
@@ -59,9 +63,7 @@ final class DeclarationBlockParserTest extends TestCase
      */
     public function normalizesPropertyName(string $name, string $expectedNormalization): void
     {
-        $subject = new DeclarationBlockParser();
-
-        $result = $subject->normalizePropertyName($name);
+        $result = DeclarationBlockParser::normalizePropertyName($name);
 
         self::assertSame($expectedNormalization, $result);
     }
@@ -69,7 +71,7 @@ final class DeclarationBlockParserTest extends TestCase
     /**
      * @return array<non-empty-string, array{string: string, array: array<non-empty-string, non-empty-string>}>
      */
-    public function provideDeclratationBlockAsStringAndArray(): array
+    public function provideDeclarationBlockAsStringAndArray(): array
     {
         return [
             'empty' => [
@@ -148,6 +150,50 @@ final class DeclarationBlockParserTest extends TestCase
                 'string' => '--base-size-16: 1rem;',
                 'array' => ['--base-size-16' => '1rem'],
             ],
+            'custom property with everything definition' => [
+                'string' => '--Base_size-4u: normal;',
+                'array' => ['--Base_size-4u' => 'normal'],
+            ],
+            'specification test single character allowed' => [
+                'string' => 'x: 0;',
+                'array' => ['x' => '0'],
+            ],
+            'specification test hyphen single character allowed' => [
+                'string' => '-o: normal;',
+                'array' => ['-o' => 'normal'],
+            ],
+            'specification test underscore allowed' => [
+                'string' => '_allowed: normal;',
+                'array' => ['_allowed' => 'normal'],
+            ],
+            'specification test hyphen underscore allowed' => [
+                'string' => '-_allowed: normal;',
+                'array' => ['-_allowed' => 'normal'],
+            ],
+            'specification test double hyphen underscore allowed' => [
+                'string' => '--_allowed: normal;',
+                'array' => ['--_allowed' => 'normal'],
+            ],
+            'specification test double underscore allowed' => [
+                'string' => '__allowed: normal;',
+                'array' => ['__allowed' => 'normal'],
+            ],
+            'specification test number not allowed' => [
+                'string' => '2not-allowed: unset;',
+                'array' => [],
+            ],
+            'specification test hyphen number not allowed' => [
+                'string' => '-2not-allowed: unset;',
+                'array' => [],
+            ],
+            'specification test double hyphen number allowed' => [
+                'string' => '--2allowed: normal;',
+                'array' => ['--2allowed' => 'normal'],
+            ],
+            'specification test backslash not allowed' => [
+                'string' => 'not\\allowed: unset;',
+                'array' => [],
+            ],
             'declaration using custom property' => [
                 'string' => 'color: var(--text-color);',
                 'array' => ['color' => 'var(--text-color)'],
@@ -210,17 +256,15 @@ final class DeclarationBlockParserTest extends TestCase
     /**
      * @test
      *
-     * @param array<non-empty-string, non-empty-string> $declratationBlockAsArray
+     * @param array<non-empty-string, non-empty-string> $declarationBlockAsArray
      *
-     * @dataProvider provideDeclratationBlockAsStringAndArray
+     * @dataProvider provideDeclarationBlockAsStringAndArray
      */
-    public function parses(string $declratationBlockAsString, array $declratationBlockAsArray): void
+    public function parses(string $declarationBlockAsString, array $declarationBlockAsArray): void
     {
-        $subject = new DeclarationBlockParser();
+        $result = DeclarationBlockParser::parse($declarationBlockAsString);
 
-        $result = $subject->parse($declratationBlockAsString);
-
-        self::assertSame($declratationBlockAsArray, $result);
+        self::assertSame($declarationBlockAsArray, $result);
     }
 
     /**
@@ -228,9 +272,7 @@ final class DeclarationBlockParserTest extends TestCase
      */
     public function overridesEarlierDeclarationWithLaterOne(): void
     {
-        $subject = new DeclarationBlockParser();
-
-        $result = $subject->parse('color: red; color: green;');
+        $result = DeclarationBlockParser::parse('color: red; color: green;');
 
         self::assertSame(['color' => 'green'], $result);
     }
@@ -243,12 +285,28 @@ final class DeclarationBlockParserTest extends TestCase
      */
     public function providesConsistentResults(): void
     {
-        $subject = new DeclarationBlockParser();
         $declarationBlock = 'color: green;';
 
-        $firstResult = $subject->parse($declarationBlock);
-        $secondResult = $subject->parse($declarationBlock);
+        $firstResult = DeclarationBlockParser::parse($declarationBlock);
+        $secondResult = DeclarationBlockParser::parse($declarationBlock);
 
         self::assertSame($firstResult, $secondResult);
     }
+
+    /**
+     * @test
+     */
+    public function clearCacheEmptiesStaticCache(): void
+    {
+        DeclarationBlockParser::parse('color: green;');
+
+        DeclarationBlockParser::clearCache();
+
+        $cacheProperty = new \ReflectionProperty(DeclarationBlockParser::class, 'cache');
+        if (\PHP_VERSION_ID < 80100) {
+            $cacheProperty->setAccessible(true);
+        }
+        self::assertSame([], $cacheProperty->getValue());
+    }
+
 }

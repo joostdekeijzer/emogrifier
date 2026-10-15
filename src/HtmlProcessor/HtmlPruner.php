@@ -18,8 +18,6 @@ final class HtmlPruner extends AbstractHtmlProcessor
      * supports XPath 1.0, lower-case() isn't available to us. We've thus far only set attributes to lowercase,
      * not attribute values. Consequently, we need to translate() the letters that would be in 'NONE' ("NOE")
      * to lowercase.
-     *
-     * @var non-empty-string
      */
     private const DISPLAY_NONE_MATCHER
         = '//*[@style and contains(translate(translate(@style," ",""),"NOE","noe"),"display:none")'
@@ -32,14 +30,16 @@ final class HtmlPruner extends AbstractHtmlProcessor
      */
     public function removeElementsWithDisplayNone(): self
     {
-        $elementsWithStyleDisplayNone = $this->getXPath()->query(self::DISPLAY_NONE_MATCHER);
+        $elementsWithStyleDisplayNone = $this->xPath->query(self::DISPLAY_NONE_MATCHER);
+        \assert($elementsWithStyleDisplayNone instanceof \DOMNodeList);
         if ($elementsWithStyleDisplayNone->length === 0) {
             return $this;
         }
 
         foreach ($elementsWithStyleDisplayNone as $element) {
+            \assert($element instanceof \DOMElement);
             $parentNode = $element->parentNode;
-            if ($parentNode !== null) {
+            if ($parentNode instanceof \DOMElement) {
                 $parentNode->removeChild($element);
             }
         }
@@ -63,7 +63,7 @@ final class HtmlPruner extends AbstractHtmlProcessor
     public function removeRedundantClasses(array $classesToKeep = []): self
     {
         /** @var \DOMNodeList<\DOMElement> $elementsWithClassAttribute */
-        $elementsWithClassAttribute = $this->getXPath()->query('//*[@class]');
+        $elementsWithClassAttribute = $this->xPath->query('//*[@class]');
 
         if ($classesToKeep !== []) {
             $this->removeClassesFromElements($elementsWithClassAttribute, $classesToKeep);
@@ -88,6 +88,7 @@ final class HtmlPruner extends AbstractHtmlProcessor
 
         $preg = new Preg();
         foreach ($elements as $element) {
+            /** @var list<string> $elementClasses */
             $elementClasses = $preg->split('/\\s++/', \trim($element->getAttribute('class')));
             $elementClassesToKeep = $classesToKeepIntersector->intersectWith($elementClasses);
             if ($elementClassesToKeep !== []) {
@@ -123,11 +124,13 @@ final class HtmlPruner extends AbstractHtmlProcessor
      */
     public function removeRedundantClassesAfterCssInlined(CssInliner $cssInliner): self
     {
-        $preg = new Preg();
-
         $classesToKeepAsKeys = [];
+
+        $preg = new Preg();
         foreach ($cssInliner->getMatchingUninlinableSelectors() as $selector) {
+            $matches = null;
             $preg->matchAll('/\\.(-?+[_a-zA-Z][\\w\\-]*+)/', $selector, $matches);
+            \assert(isset($matches[1]));
             $classesToKeepAsKeys += \array_fill_keys($matches[1], true);
         }
 

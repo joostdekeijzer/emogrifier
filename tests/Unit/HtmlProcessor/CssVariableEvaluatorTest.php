@@ -13,9 +13,6 @@ use PHPUnit\Framework\TestCase;
  */
 final class CssVariableEvaluatorTest extends TestCase
 {
-    /**
-     * @var non-empty-string
-     */
     private const COMMON_TEST_HTML = '
         <html>
             <head>
@@ -392,5 +389,35 @@ final class CssVariableEvaluatorTest extends TestCase
         $htmlResult = $subject->evaluateVariables()->render();
 
         self::assertStringContainsString($expectedHtmlFragment, $htmlResult);
+    }
+
+    /**
+     * @return array<string, array{0: positive-int}>
+     */
+    public function provideNestingLevel(): array
+    {
+        return [
+            '12 deep' => [12],
+            '257 deep' => [257],
+            '513 deep' => [513],
+            '1300 deep' => [1300],
+        ];
+    }
+
+    /**
+     * @test
+     *
+     * @param positive-int $nestingLevel
+     *
+     * @dataProvider provideNestingLevel
+     */
+    public function supportsDeeplyNestedHtml(int $nestingLevel): void
+    {
+        $this->expectNotToPerformAssertions();
+
+        $html = \str_repeat('<div>', $nestingLevel) . \str_repeat('</div>', $nestingLevel);
+        $subject = CssVariableEvaluator::fromHtml($html);
+
+        $subject->evaluateVariables();
     }
 }

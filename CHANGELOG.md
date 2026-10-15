@@ -18,7 +18,56 @@ Please also have a look at our
 
 ### Fixed
 
-- Use safe version of some PHP functions (#1457, #1492, #1495, #1496, #1499)
+## 8.3.0: Support PHP 8.6, mitigate "dependency hell" in WordPress, and cater for extreme usage
+
+### Added
+
+- Add support for PHP 8.6 (#1649)
+
+### Changed
+
+- Upon an unexpected regular expression blowout, `trigger_error()` will now be
+  called in a production environment, rather than an exception being thrown;
+  recovery behaviour is to return the original string unmodified;
+  if the 'debug' option is set, an exception will still be thrown;
+  this restores the behaviour to that of the 8.1.0 release
+  (#1663, #1665, #1666, #1667, #1668, #1669, #1670)
+- The `render()` methods will now throw an exception upon an internal error
+  from `DOMDocument`, instead of returning an empty string (#1588)
+- Require `sabberworm/php-css-parser` >= 9.5.0 (#1575, #1582, #1583, #1657)
+
+### Deprecated
+
+- Deprecate support for PHP 7.3 (#1604)
+
+### Removed
+
+- Remove `thecodingmachine/safe` dependency; note that this is still used in a
+  development environment for the unit tests (#1671)
+
+### Fixed
+
+- Clear all previous caches on each invocation to avoid memory usage build-up
+  (#1567)
+- Allow very deeply-nested HTML (#1556, #1560)
+
+## 8.2.0: Add support for Symfony 8.0
+
+### Added
+
+- Add support for Symfony 8.0 (#1509)
+
+### Changed
+
+- Improve performance of checking for existing `Content-Type` (#1518, #1519)
+
+### Fixed
+
+- Support very large content in `meta` element in `head` (#1519)
+- Support very large HTML files without a `Content-Type` (#1518)
+- Allow numbers and underscores in CSS property names (#1500)
+- Use safe version of some PHP functions
+  (#1457, #1492, #1495, #1496, #1499, #1503, #1513, #1515, #1517)
 
 ## 8.1.0: Add support for PHP 8.5
 

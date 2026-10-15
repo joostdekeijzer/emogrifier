@@ -19,9 +19,6 @@ final class CssDocumentTest extends TestCase
 {
     use AssertCss;
 
-    /**
-     * @var non-empty-string
-     */
     private const VALID_AT_FONT_FACE_RULE = '@font-face {' . "\n"
         . '  font-family: "Foo Sans";' . "\n"
         . '  src: url("/foo-sans.woff2") format("woff2");' . "\n}";
@@ -303,7 +300,7 @@ final class CssDocumentTest extends TestCase
     public function parsesMultipleStyleRulesWithOtherCssBetween(string $cssBetween): void
     {
         $subject = $this->createDebugSubject(
-            'p { color: green; }' . $cssBetween . '@media screen { h1 { color: green; } }'
+            'p { color: green; }' . $cssBetween . '@media screen { h1 { color: green; } }',
         );
 
         $result = $subject->getStyleRulesData(['screen']);
@@ -321,7 +318,7 @@ final class CssDocumentTest extends TestCase
     public function parsesMultipleStyleRulesWithOtherCssBefore(string $cssBefore): void
     {
         $subject = $this->createDebugSubject(
-            $cssBefore . 'p { color: green; } @media screen { h1 { color: green; } }'
+            $cssBefore . 'p { color: green; } @media screen { h1 { color: green; } }',
         );
 
         $result = $subject->getStyleRulesData(['screen']);
@@ -529,19 +526,19 @@ final class CssDocumentTest extends TestCase
         $result = $subject->renderNonConditionalAtRules();
 
         preg_match('/@[\\w\\-]++/', $atRuleCss, $atAndRuleNameMatches);
-        self::assertIsArray($atAndRuleNameMatches);
+        self::assertArrayHasKey(0, $atAndRuleNameMatches);
         $atAndRuleName = $atAndRuleNameMatches[0];
         self::assertStringNotContainsString($atAndRuleName, $result);
     }
 
     /**
+     * Note: Invalid non-conditional at-rules which do not currently cause an exception not yet tested.
+     *
      * @test
      *
      * @param non-empty-string $atRuleCss
      *
      * @dataProvider provideInvalidNonConditionalAtRuleWhichCausesException
-     *
-     * Invalid non-conditional at-rules which do not currently cause an exception not yet tested.
      */
     public function throwsExceptionForInvalidNonConditionalAtRuleInDebugMode(
         string $atRuleCss,

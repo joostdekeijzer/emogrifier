@@ -17,9 +17,6 @@ final class CssConcatenatorTest extends TestCase
      */
     private $subject;
 
-    /**
-     * Setup.
-     */
     protected function setUp(): void
     {
         $this->subject = new CssConcatenator();
@@ -60,7 +57,7 @@ final class CssConcatenatorTest extends TestCase
     }
 
     /**
-     * @return array<string, array<int, array<int, string>>>
+     * @return array<non-empty-string, array{0: non-empty-list<non-empty-string>, 1: non-empty-list<non-empty-string>}>
      */
     public function equivalentSelectorsDataProvider(): array
     {
@@ -80,8 +77,8 @@ final class CssConcatenatorTest extends TestCase
     /**
      * @test
      *
-     * @param string[] $selectors1
-     * @param string[] $selectors2
+     * @param non-empty-list<non-empty-string> $selectors1
+     * @param non-empty-list<non-empty-string> $selectors2
      *
      * @dataProvider equivalentSelectorsDataProvider
      */
@@ -111,7 +108,11 @@ final class CssConcatenatorTest extends TestCase
     }
 
     /**
-     * @return array<string, array<int, array<int, string>>>
+     * @return array<non-empty-string, array{
+     *             0: non-empty-list<non-empty-string>,
+     *             1: non-empty-list<non-empty-string>,
+     *             2: non-empty-list<non-empty-string>
+     *         }>
      */
     public function differentSelectorsDataProvider(): array
     {
@@ -157,9 +158,9 @@ final class CssConcatenatorTest extends TestCase
     /**
      * @test
      *
-     * @param string[] $selectors1
-     * @param string[] $selectors2
-     * @param string[] $combinedSelectors
+     * @param non-empty-list<non-empty-string> $selectors1
+     * @param non-empty-list<non-empty-string> $selectors2
+     * @param non-empty-list<non-empty-string> $combinedSelectors
      *
      * @dataProvider differentSelectorsDataProvider
      */
@@ -181,8 +182,8 @@ final class CssConcatenatorTest extends TestCase
     /**
      * @test
      *
-     * @param string[] $selectors1
-     * @param string[] $selectors2
+     * @param non-empty-list<non-empty-string> $selectors1
+     * @param non-empty-list<non-empty-string> $selectors2
      *
      * @dataProvider differentSelectorsDataProvider
      */
@@ -215,8 +216,8 @@ final class CssConcatenatorTest extends TestCase
     /**
      * @test
      *
-     * @param string[] $selectors1
-     * @param string[] $selectors2
+     * @param non-empty-list<non-empty-string> $selectors1
+     * @param non-empty-list<non-empty-string> $selectors2
      *
      * @dataProvider equivalentSelectorsDataProvider
      */
@@ -237,9 +238,9 @@ final class CssConcatenatorTest extends TestCase
     /**
      * @test
      *
-     * @param string[] $selectors1
-     * @param string[] $selectors2
-     * @param string[] $combinedSelectors
+     * @param non-empty-list<non-empty-string> $selectors1
+     * @param non-empty-list<non-empty-string> $selectors2
+     * @param non-empty-list<non-empty-string> $combinedSelectors
      *
      * @dataProvider differentSelectorsDataProvider
      */
@@ -272,7 +273,13 @@ final class CssConcatenatorTest extends TestCase
     }
 
     /**
-     * @return array<string, array{0:array<int, string>, 1:string, 2:array<int, string>, 3:string, 4:string}>
+     * @return array<non-empty-string, array{
+     *             0: non-empty-list<non-empty-string>,
+     *             1: non-empty-string,
+     *             2: non-empty-list<non-empty-string>,
+     *             3: non-empty-string,
+     *             4: string
+     *          }>
      */
     public function combinableRulesDataProvider(): array
     {
@@ -286,11 +293,10 @@ final class CssConcatenatorTest extends TestCase
     /**
      * @test
      *
-     * @param string[] $rule1Selectors
-     * @param string $rule1DeclarationsBlock
-     * @param string[] $rule2Selectors
-     * @param string $rule2DeclarationsBlock
-     * @param string $media
+     * @param non-empty-list<non-empty-string> $rule1Selectors
+     * @param non-empty-string $rule1DeclarationsBlock
+     * @param non-empty-list<non-empty-string> $rule2Selectors
+     * @param non-empty-string $rule2DeclarationsBlock
      *
      * @dataProvider combinableRulesDataProvider
      */

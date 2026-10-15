@@ -10,6 +10,13 @@ on:
 
 name: CI
 
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   php-lint:
     name: PHP Lint
@@ -28,13 +35,16 @@ jobs:
           - '8.3'
           - '8.4'
           - '8.5'
+          - '8.6'
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - name: Install PHP
-        uses: shivammathur/setup-php@v2
+        uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
         with:
           php-version: ${{ matrix.php-version }}
           ini-file: development
@@ -64,10 +74,12 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - name: Install PHP
-        uses: shivammathur/setup-php@v2
+        uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
         with:
           php-version: ${{ matrix.php-version }}
           ini-file: development
@@ -95,7 +107,8 @@ jobs:
       matrix:
         command:
           - composer:normalize
-          - php:fixer
+          - php:cs-fixer
+          - php:sniff
           - php:md
           - php:rector
           - php:stan
@@ -104,10 +117,12 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - name: Install PHP
-        uses: shivammathur/setup-php@v2
+        uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
         with:
           php-version: ${{ matrix.php-version }}
           ini-file: development
@@ -121,7 +136,7 @@ jobs:
         run: composer config --global --list
 
       - name: Cache dependencies installed with composer
-        uses: actions/cache@v4
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.cache/composer
           key: php${{ matrix.php-version }}-composer-${{ hashFiles('**/composer.json') }}
@@ -158,16 +173,19 @@ jobs:
           - '8.3'
           - '8.4'
           - '8.5'
+          - '8.6'
         dependencies:
           - lowest
           - highest
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - name: Install PHP
-        uses: shivammathur/setup-php@v2
+        uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
         with:
           php-version: ${{ matrix.php-version }}
           ini-file: development
@@ -181,7 +199,68 @@ jobs:
         run: composer config --global --list
 
       - name: Cache dependencies installed with composer
-        uses: actions/cache@v4
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/composer
+          key: php${{ matrix.php-version }}-${{ matrix.dependencies }}-composer-${{ hashFiles('**/composer.json') }}
+          restore-keys: |
+            php${{ matrix.php-version }}-${{ matrix.dependencies }}-composer-
+
+      - name: Install Composer dependencies
+        run: |
+          if [[ "${{ matrix.dependencies }}" == 'lowest' ]]; then
+            DEPENDENCIES='--prefer-lowest';
+          else
+            DEPENDENCIES='';
+          fi;
+          composer install --no-progress;
+          composer update --with-dependencies --no-progress "${DEPENDENCIES}";
+          composer show;
+
+      - name: Run Tests
+        run: composer check:tests:unit
+
+  unit-tests-xdebug:
+    name: Unit tests with Xdebug
+
+    runs-on: ubuntu-22.04
+
+    needs: [ php-lint, composer-validate ]
+
+    strategy:
+      fail-fast: false
+      matrix:
+        php-version:
+          - '8.4'
+        dependencies:
+          - highest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install PHP
+        uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
+        with:
+          php-version: ${{ matrix.php-version }}
+          ini-file: development
+          tools: composer:v2
+          coverage: xdebug
+          ini-values: xdebug.mode=develop
+
+      - name: Show the Composer version
+        run: composer --version
+
+      - name: Show the Composer configuration
+        run: composer config --global --list
+
+      - name: Show the PHP version
+        run: php -v
+
+      - name: Cache dependencies installed with composer
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.cache/composer
           key: php${{ matrix.php-version }}-${{ matrix.dependencies }}-composer-${{ hashFiles('**/composer.json') }}

@@ -106,16 +106,16 @@ final class AbstractHtmlProcessorTest extends TestCase
      */
     public function renderPreservesOuterHtmlProvidedToFromHtml(): void
     {
-        $rawHtml = '<!DOCTYPE HTML>' .
-            '<html>' .
-            '<head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"></head>' .
-            '<body></body>' .
-            '</html>';
-        $formattedHtml = "<!DOCTYPE html>\n" .
-            "<html>\n" .
-            '<head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"></head>' . "\n" .
-            "<body></body>\n" .
-            "</html>\n";
+        $rawHtml = '<!DOCTYPE HTML>'
+            . '<html>'
+            . '<head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"></head>'
+            . '<body></body>'
+            . '</html>';
+        $formattedHtml = "<!DOCTYPE html>\n"
+            . "<html>\n"
+            . '<head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"></head>' . "\n"
+            . "<body></body>\n"
+            . "</html>\n";
 
         $subject = TestingHtmlProcessor::fromHtml($rawHtml);
         $html = $subject->render();
@@ -128,15 +128,15 @@ final class AbstractHtmlProcessorTest extends TestCase
      */
     public function renderPreservesOriginalHtmlFormatting(): void
     {
-        $rawHtml = "<!DOCTYPE html>\n" .
-            "<html>\n" .
-            '<head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"></head>' .
-            "<body>\n" .
-            "<ul>\n" .
-            "<li><em>Hello</em> world</li>\n" .
-            "</ul>\n" .
-            "</body>\n" .
-            '</html>';
+        $rawHtml = "<!DOCTYPE html>\n"
+            . "<html>\n"
+            . '<head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"></head>'
+            . "<body>\n"
+            . "<ul>\n"
+            . "<li><em>Hello</em> world</li>\n"
+            . "</ul>\n"
+            . "</body>\n"
+            . '</html>';
 
         $subject = TestingHtmlProcessor::fromHtml($rawHtml);
         $renderedHtml = $subject->render();
@@ -151,18 +151,18 @@ final class AbstractHtmlProcessorTest extends TestCase
     {
         $this->expectException(\InvalidArgumentException::class);
 
-        // @phpstan-ignore-next-line argument.type We're explicitly testing with an invalid value here.
+        // @phpstan-ignore argument.type (We're explicitly testing with an invalid value here.)
         TestingHtmlProcessor::fromHtml('');
     }
 
     /**
-     * @return array<string, array{0: non-empty-string, 1: non-empty-string}>
+     * @return array<non-empty-string, array{0: non-empty-string, 1: non-empty-string}>
      */
     public function invalidHtmlDataProvider(): array
     {
         return [
             'broken nesting gets nested' => ['<b><i></b></i>', '<b><i></i></b>'],
-            'partial opening tag gets closed' => ['<b', '<b></b>'],
+            'partial opening tag does not break the remaining HTML' => ['<b', '<body>'],
             'only opening tag gets closed' => ['<b>', '<b></b>'],
             'only closing tag gets removed' => ['foo</b> bar', 'foo bar'],
         ];
@@ -185,7 +185,7 @@ final class AbstractHtmlProcessorTest extends TestCase
     }
 
     /**
-     * @return string[][]
+     * @return array<non-empty-string, array{0: non-empty-string, 1: non-empty-string}>
      */
     public function provideHtmlWithOptionalTagsOmitted(): array
     {
@@ -298,8 +298,8 @@ final class AbstractHtmlProcessorTest extends TestCase
      *
      * @see https://html.spec.whatwg.org/multipage/syntax.html#optional-tags
      *
-     * @param string $htmlWithOptionalTagsOmitted
-     * @param string $equivalentHtml
+     * @param non-empty-string $htmlWithOptionalTagsOmitted
+     * @param non-empty-string $equivalentHtml
      *
      * @dataProvider provideHtmlWithOptionalTagsOmitted
      */
@@ -313,7 +313,7 @@ final class AbstractHtmlProcessorTest extends TestCase
     }
 
     /**
-     * @return string[][]
+     * @return list<array{0: non-empty-string}>
      */
     public function providePSiblingTagName(): array
     {
@@ -355,26 +355,26 @@ final class AbstractHtmlProcessorTest extends TestCase
      *
      * @see https://html.spec.whatwg.org/multipage/syntax.html#optional-tags
      *
-     * @param string $siblingTagName
+     * @param non-empty-string $siblingTagName
      *
      * @dataProvider providePSiblingTagName
      */
     public function insertsOptionallyOmittedClosingPTagBeforeSibling(string $siblingTagName): void
     {
         $subject = TestingHtmlProcessor::fromHtml(
-            '<body><p> Hello <' . $siblingTagName . '></' . $siblingTagName . '></body>'
+            '<body><p> Hello <' . $siblingTagName . '></' . $siblingTagName . '></body>',
         );
 
         $result = $subject->render();
 
         self::assertContainsHtml(
             '<body><p> Hello </p><' . $siblingTagName . '></' . $siblingTagName . '></body>',
-            $result
+            $result,
         );
     }
 
     /**
-     * @return string[][]
+     * @return list<array{0: non-empty-string}>
      */
     public function provideParagraphParentTagName(): array
     {
@@ -401,26 +401,26 @@ final class AbstractHtmlProcessorTest extends TestCase
      *
      * @see https://html.spec.whatwg.org/multipage/syntax.html#optional-tags
      *
-     * @param string $parentTagName
+     * @param non-empty-string $parentTagName
      *
      * @dataProvider provideParagraphParentTagName
      */
     public function insertsOptionallyOmittedClosingPTagAtEndOfParent(string $parentTagName): void
     {
         $subject = TestingHtmlProcessor::fromHtml(
-            '<body><' . $parentTagName . '><p> Hello </' . $parentTagName . '><p> World </p></body>'
+            '<body><' . $parentTagName . '><p> Hello </' . $parentTagName . '><p> World </p></body>',
         );
 
         $result = $subject->render();
 
         self::assertContainsHtml(
             '<body><' . $parentTagName . '><p> Hello </p></' . $parentTagName . '><p> World </p></body>',
-            $result
+            $result,
         );
     }
 
     /**
-     * @return array<string, array{0: non-empty-string}>
+     * @return array<non-empty-string, array{0: non-empty-string}>
      */
     public function provideContentWithoutHtmlTag(): array
     {
@@ -458,7 +458,7 @@ final class AbstractHtmlProcessorTest extends TestCase
     }
 
     /**
-     * @return array<string, array{0: non-empty-string}>
+     * @return array<non-empty-string, array{0: non-empty-string}>
      */
     public function provideContentWithHtmlTag(): array
     {
@@ -474,8 +474,8 @@ final class AbstractHtmlProcessorTest extends TestCase
     }
 
     /**
-     * @return array<string, list<non-empty-string>> The second element of each dataset is optional, and is the expected
-     * normalization of the `<html>` tag, if different.
+     * @return array<non-empty-string, array{0: non-empty-string, 1?: non-empty-string}> The second element of each
+     * dataset is optional, and is the expected normalization of the `<html>` tag, if different.
      */
     public function provideHtmlTagWithAttributes(): array
     {
@@ -527,7 +527,7 @@ final class AbstractHtmlProcessorTest extends TestCase
     }
 
     /**
-     * @return array<string, array{0: non-empty-string}>
+     * @return array<non-empty-string, array{0: non-empty-string}>
      */
     public function provideContentWithoutHeadTag(): array
     {
@@ -576,7 +576,7 @@ final class AbstractHtmlProcessorTest extends TestCase
     }
 
     /**
-     * @return array<string, array{0: non-empty-string}>
+     * @return array<non-empty-string, array{0: non-empty-string}>
      */
     public function provideContentWithHeadTag(): array
     {
@@ -636,7 +636,7 @@ final class AbstractHtmlProcessorTest extends TestCase
     }
 
     /**
-     * @return array<string, array{0: non-empty-string}>
+     * @return array<non-empty-string, array{0: non-empty-string}>
      */
     public function contentWithoutBodyTagDataProvider(): array
     {
@@ -676,7 +676,7 @@ final class AbstractHtmlProcessorTest extends TestCase
     }
 
     /**
-     * @return string[][]
+     * @return array<non-empty-string, array{0: non-empty-string}>
      */
     public function specialCharactersDataProvider(): array
     {
@@ -691,7 +691,7 @@ final class AbstractHtmlProcessorTest extends TestCase
     /**
      * @test
      *
-     * @param string $codeNotToBeChanged
+     * @param non-empty-string $codeNotToBeChanged
      *
      * @dataProvider specialCharactersDataProvider
      */
@@ -718,23 +718,23 @@ final class AbstractHtmlProcessorTest extends TestCase
     }
 
     /**
-     * @return array<string, array<int, string>>
+     * @return array<non-empty-string, array{0: non-empty-string}>
      */
     public function documentTypeDataProvider(): array
     {
         return [
             'HTML5' => ['<!DOCTYPE html>'],
             'HTML 4.01 strict' => [
-                '<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" ' .
-                '"http://www.w3.org/TR/html4/strict.dtd">',
+                '<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" '
+                . '"http://www.w3.org/TR/html4/strict.dtd">',
             ],
             'HTML 4.01 transitional' => [
-                '<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" ' .
-                '"http://www.w3.org/TR/html4/loose.dtd">',
+                '<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" '
+                . '"http://www.w3.org/TR/html4/loose.dtd">',
             ],
             'HTML 4 transitional' => [
-                '<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN" ' .
-                '"http://www.w3.org/TR/REC-html40/loose.dtd">',
+                '<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN" '
+                . '"http://www.w3.org/TR/REC-html40/loose.dtd">',
             ],
             'HTML 3.2' => ['<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">'],
         ];
@@ -743,7 +743,7 @@ final class AbstractHtmlProcessorTest extends TestCase
     /**
      * @test
      *
-     * @param string $documentType
+     * @param non-empty-string $documentType
      *
      * @dataProvider documentTypeDataProvider
      */
@@ -758,7 +758,7 @@ final class AbstractHtmlProcessorTest extends TestCase
     }
 
     /**
-     * @return string[][]
+     * @return array<non-empty-string, array{0: non-empty-string, 1: non-empty-string}>
      */
     public function normalizedDocumentTypeDataProvider(): array
     {
@@ -785,8 +785,8 @@ final class AbstractHtmlProcessorTest extends TestCase
     /**
      * @test
      *
-     * @param string $documentType
-     * @param string $normalizedDocumentType
+     * @param non-empty-string $documentType
+     * @param non-empty-string $normalizedDocumentType
      *
      * @dataProvider normalizedDocumentTypeDataProvider
      */
@@ -801,7 +801,7 @@ final class AbstractHtmlProcessorTest extends TestCase
     }
 
     /**
-     * @return array<string, array{0: non-empty-string}>
+     * @return array<non-empty-string, array{0: non-empty-string}>
      */
     public function provideMalformedContentTypeMetaTag(): array
     {
@@ -844,13 +844,13 @@ final class AbstractHtmlProcessorTest extends TestCase
 
         $numberOfContentTypeMetaTags = \substr_count(
             $resultBeforeHeadEnd,
-            '<meta http-equiv="Content-Type" content="text/html; charset=utf-8">'
+            '<meta http-equiv="Content-Type" content="text/html; charset=utf-8">',
         );
         self::assertSame(1, $numberOfContentTypeMetaTags);
     }
 
     /**
-     * @return array<string, array{0: non-empty-string}>
+     * @return array<non-empty-string, array{0: non-empty-string}>
      */
     public function provideContentTypeMetaTag(): array
     {
@@ -876,7 +876,7 @@ final class AbstractHtmlProcessorTest extends TestCase
     }
 
     /**
-     * @return array<string, array{0: non-empty-string, 1: non-empty-string}>
+     * @return array<non-empty-string, array{0: non-empty-string, 1: non-empty-string}>
      */
     public function provideHtmlAroundContentType(): array
     {
@@ -936,13 +936,14 @@ final class AbstractHtmlProcessorTest extends TestCase
 
         $domDocument = $subject->getDomDocument();
         $resultHeadContent = $domDocument->saveHTML($domDocument->getElementsByTagName('head')->item(0));
+        self::assertIsString($resultHeadContent);
 
         $numberOfContentTypeMetaTags = \substr_count(\strtolower($resultHeadContent), 'content-type');
         self::assertSame(1, $numberOfContentTypeMetaTags);
     }
 
     /**
-     * @return array<string, array{0: string, 1: string}>
+     * @return array<non-empty-string, array{0: non-empty-string, 1: non-empty-string}>
      */
     public function xmlSelfClosingTagDataProvider(): array
     {
@@ -967,26 +968,26 @@ final class AbstractHtmlProcessorTest extends TestCase
     }
 
     /**
-     * @return array<string, array{0:string, 1:string}>
+     * @return array<non-empty-string, array{0: non-empty-string, 1: non-empty-string}>
      */
     public function nonXmlSelfClosingTagDataProvider(): array
     {
         return \array_map(
             /**
-             * @param array{0:string, 1:string} $dataset
+             * @param array{0: non-empty-string, 1: non-empty-string} $dataset
              *
-             * @return array{0:string, 1:string}
+             * @return array{0: non-empty-string, 1: non-empty-string}
              */
             static function (array $dataset): array {
                 $dataset[0] = \str_replace('/>', '>', $dataset[0]);
                 return $dataset;
             },
-            $this->xmlSelfClosingTagDataProvider()
+            $this->xmlSelfClosingTagDataProvider(),
         );
     }
 
     /**
-     * @return array<string, array{0: string, 1: string, 2: string}>
+     * @return array<non-empty-string, array{0: non-empty-string, 1: non-empty-string, 2: non-empty-string}>
      *         Each dataset has three elements in the following order:
      *         - HTML with non-XML self-closing tags (e.g. "...<br>...");
      *         - The equivalent HTML with XML self-closing tags (e.g. "...<br/>...");
@@ -996,18 +997,18 @@ final class AbstractHtmlProcessorTest extends TestCase
     {
         return \array_map(
             /**
-             * @param array{0: string, 1: string} $dataset
+             * @param array{0: non-empty-string, 1: non-empty-string} $dataset
              *
-             * @return array{0: string, 1: string, 2:string}
+             * @return array{0: non-empty-string, 1: non-empty-string, 2:non-empty-string}
              */
             static function (array $dataset): array {
                 $updatedDataset = $dataset;
                 \array_unshift($updatedDataset, \str_replace('/>', '>', $dataset[0]));
 
-                /** @var array{0: string, 1: string, 2:string} $updatedDataset */
+                /** @var array{0: non-empty-string, 1: non-empty-string, 2: non-empty-string} $updatedDataset */
                 return $updatedDataset;
             },
-            $this->xmlSelfClosingTagDataProvider()
+            $this->xmlSelfClosingTagDataProvider(),
         );
     }
 
@@ -1015,12 +1016,12 @@ final class AbstractHtmlProcessorTest extends TestCase
      * Concatenates pairs of datasets (in a similar way to SQL `JOIN`) such that each new dataset consists of a 'row'
      * from a left-hand-side dataset joined with a 'row' from a right-hand-side dataset.
      *
-     * @param array<string, array<int, string>> $leftDatasets
-     * @param array<string, array<int, string>> $rightDatasets
+     * @param array<non-empty-string, list<non-empty-string>> $leftDatasets
+     * @param array<non-empty-string, list<non-empty-string>> $rightDatasets
      *
-     * @return string[][] The new datasets comprise the first dataset from the left-hand side with each of the datasets
-     *         from the right-hand side, and the each of the remaining datasets from the left-hand side with the first
-     *         dataset from the right-hand side.
+     * @return array<non-empty-string, list<non-empty-string>> The new datasets comprise the first dataset from the
+     *         left-hand side with each of the datasets from the right-hand side, and each of the remaining datasets
+     *         from the left-hand side with the first dataset from the right-hand side.
      */
     public static function joinDatasets(array $leftDatasets, array $rightDatasets): array
     {
@@ -1042,7 +1043,7 @@ final class AbstractHtmlProcessorTest extends TestCase
     }
 
     /**
-     * @return string[][]
+     * @return array<non-empty-string, list<non-empty-string>>
      */
     public function documentTypeAndSelfClosingTagDataProvider(): array
     {
@@ -1052,9 +1053,9 @@ final class AbstractHtmlProcessorTest extends TestCase
     /**
      * @test
      *
-     * @param string $documentType
-     * @param string $htmlWithNonXmlSelfClosingTags
-     * @param string $htmlWithXmlSelfClosingTags
+     * @param non-empty-string $documentType
+     * @param non-empty-string $htmlWithNonXmlSelfClosingTags
+     * @param non-empty-string $htmlWithXmlSelfClosingTags
      *
      * @dataProvider documentTypeAndSelfClosingTagDataProvider
      */
@@ -1064,7 +1065,7 @@ final class AbstractHtmlProcessorTest extends TestCase
         string $htmlWithXmlSelfClosingTags
     ): void {
         $subject = TestingHtmlProcessor::fromHtml(
-            $documentType . '<html><body>' . $htmlWithXmlSelfClosingTags . '</body></html>'
+            $documentType . '<html><body>' . $htmlWithXmlSelfClosingTags . '</body></html>',
         );
 
         $result = $subject->render();
@@ -1075,15 +1076,15 @@ final class AbstractHtmlProcessorTest extends TestCase
     /**
      * @test
      *
-     * @param string $documentType
-     * @param string $htmlWithNonXmlSelfClosingTags
+     * @param non-empty-string $documentType
+     * @param non-empty-string $htmlWithNonXmlSelfClosingTags
      *
      * @dataProvider documentTypeAndSelfClosingTagDataProvider
      */
     public function keepsNonXmlSelfClosingTags(string $documentType, string $htmlWithNonXmlSelfClosingTags): void
     {
         $subject = TestingHtmlProcessor::fromHtml(
-            $documentType . '<html><body>' . $htmlWithNonXmlSelfClosingTags . '</body></html>'
+            $documentType . '<html><body>' . $htmlWithNonXmlSelfClosingTags . '</body></html>',
         );
 
         $result = $subject->render();
@@ -1094,20 +1095,62 @@ final class AbstractHtmlProcessorTest extends TestCase
     /**
      * @test
      *
-     * @param string $htmlWithNonXmlSelfClosingTags
-     * @param string $tagName
+     * @param non-empty-string $htmlWithNonXmlSelfClosingTags
+     * @param non-empty-string $tagName
      *
      * @dataProvider nonXmlSelfClosingTagDataProvider
      */
     public function notAddsClosingTagForSelfClosingTags(string $htmlWithNonXmlSelfClosingTags, string $tagName): void
     {
         $subject = TestingHtmlProcessor::fromHtml(
-            '<html><body>' . $htmlWithNonXmlSelfClosingTags . '</body></html>'
+            '<html><body>' . $htmlWithNonXmlSelfClosingTags . '</body></html>',
         );
 
         $result = $subject->render();
 
         self::assertStringNotContainsString('</' . $tagName, $result);
+    }
+
+    /**
+     * @return array<non-empty-string, array{0: string, 1: string}>
+     */
+    public function provideSurroundingHtmlForBodyContent(): array
+    {
+        return [
+            'nothing - implicit BODY' => ['', ''],
+            'BODY element only' => ['<body>', '</body>'],
+            'HTML element only - implicit BODY' => ['<html>', '</html>'],
+            'HEAD element with only opening tag - implicit BODY start' => ['<head>', ''],
+            'empty HEAD element without BODY tag after' => ['<head></head>', ''],
+            'complete HEAD (empty) and BODY elements, but missing HTML element' => ['<head></head><body>', '</body>'],
+            'well-formed HTML, though missing DOCTYPE' => ['<html><head></head><body>', '</body></html>'],
+            'well-formed HTML with DOCTYPE' => ['<!DOCTYPE html><html><head></head><body>', '</body></html>'],
+            'well-formed HTML with DOCTYPE and Content-Type' => [
+                '<!DOCTYPE html><html><head>'
+                . '<meta http-equiv="Content-Type" content="text/html; charset=utf-8"></head><body>',
+                '</body></html>',
+            ],
+            'HEAD with very large content' => [
+                '<head><meta name="test" content="' . \str_repeat('f', (int) 1e7) . '"/></head>',
+                '',
+            ],
+        ];
+    }
+
+    /**
+     * @test
+     *
+     * @dataProvider provideSurroundingHtmlForBodyContent
+     */
+    public function acceptsVeryLargeBodyContent(string $htmlBeforeContent, string $htmlAfterContent): void
+    {
+        // 1e7 = 10Mb
+        $bodyContent = '<p data-large="' . \str_repeat('f', (int) 1e7) . '">Test</p>';
+
+        $subject = TestingHtmlProcessor::fromHtml($htmlBeforeContent . $bodyContent . $htmlAfterContent);
+
+        // Simply getting here passes the test.
+        self::expectNotToPerformAssertions();
     }
 
     /**
@@ -1153,7 +1196,7 @@ final class AbstractHtmlProcessorTest extends TestCase
     /**
      * @test
      *
-     * @param string $codeNotToBeChanged
+     * @param non-empty-string $codeNotToBeChanged
      *
      * @dataProvider specialCharactersDataProvider
      */
@@ -1170,8 +1213,8 @@ final class AbstractHtmlProcessorTest extends TestCase
     /**
      * @test
      *
-     * @param string $htmlWithNonXmlSelfClosingTags
-     * @param string $tagName
+     * @param non-empty-string $htmlWithNonXmlSelfClosingTags
+     * @param non-empty-string $tagName
      *
      * @dataProvider nonXmlSelfClosingTagDataProvider
      */
@@ -1180,7 +1223,7 @@ final class AbstractHtmlProcessorTest extends TestCase
         string $tagName
     ): void {
         $subject = TestingHtmlProcessor::fromHtml(
-            '<html><body>' . $htmlWithNonXmlSelfClosingTags . '</body></html>'
+            '<html><body>' . $htmlWithNonXmlSelfClosingTags . '</body></html>',
         );
 
         $result = $subject->renderBodyContent();
@@ -1215,21 +1258,23 @@ final class AbstractHtmlProcessorTest extends TestCase
      */
     public function getDomDocumentWithNormalizedHtmlRepresentsTheGivenHtml(): void
     {
-        $html = "<!DOCTYPE html>\n<html>\n<head>" .
-            '<meta http-equiv="Content-Type" content="text/html; charset=utf-8">' .
-            "</head>\n<body>\n<br>\n</body>\n</html>\n";
+        $html = "<!DOCTYPE html>\n<html>\n<head>"
+            . '<meta http-equiv="Content-Type" content="text/html; charset=utf-8">'
+            . "</head>\n<body>\n<br>\n</body>\n</html>\n";
         $subject = TestingHtmlProcessor::fromHtml($html);
 
         $domDocument = $subject->getDomDocument();
 
-        self::assertEqualsHtml($html, $domDocument->saveHTML());
+        $resultHtml = $domDocument->saveHTML();
+        self::assertIsString($resultHtml);
+        self::assertEqualsHtml($html, $resultHtml);
     }
 
     /**
      * @test
      *
-     * @param string $htmlWithNonXmlSelfClosingTags
-     * @param string $tagName
+     * @param non-empty-string $htmlWithNonXmlSelfClosingTags
+     * @param non-empty-string $tagName
      *
      * @dataProvider nonXmlSelfClosingTagDataProvider
      */
@@ -1239,7 +1284,7 @@ final class AbstractHtmlProcessorTest extends TestCase
     ): void {
         // Append a 'trap' element that might become a child node if the HTML is parsed incorrectly
         $subject = TestingHtmlProcessor::fromHtml(
-            '<html><body>' . $htmlWithNonXmlSelfClosingTags . '<span>foo</span></body></html>'
+            '<html><body>' . $htmlWithNonXmlSelfClosingTags . '<span>foo</span></body></html>',
         );
 
         $domDocument = $subject->getDomDocument();
@@ -1251,12 +1296,41 @@ final class AbstractHtmlProcessorTest extends TestCase
     }
 
     /**
+     * @return array<string, array{0: positive-int}>
+     */
+    public function provideNestingLevel(): array
+    {
+        return [
+            '12 deep' => [12],
+            '254 deep' => [254],
+            '255 deep' => [255],
+            '256 deep' => [256],
+            '257 deep' => [257],
+            '300 deep' => [300],
+            '1300 deep' => [1300],
+        ];
+    }
+
+    /**
+     * @test
+     *
+     * @param positive-int $nestingLevel
+     *
+     * @dataProvider provideNestingLevel
+     */
+    public function supportsDeeplyNestedHtml(int $nestingLevel): void
+    {
+        $html = \str_repeat('<div>', $nestingLevel) . \str_repeat('</div>', $nestingLevel);
+        $subject = TestingHtmlProcessor::fromHtml($html);
+
+        $result = $subject->render();
+
+        self::assertSame($nestingLevel, \substr_count($result, '<div>'));
+    }
+
+    /**
      * Asserts that an HTML haystack contains an HTML needle, allowing for additional newlines in the haystack that may
      * have been inserted by the `formatOutput` option of `DOMDocument`.
-     *
-     * @param string $needle
-     * @param string $haystack
-     * @param string $message
      */
     private static function assertContainsHtml(string $needle, string $haystack, string $message = ''): void
     {
@@ -1266,9 +1340,8 @@ final class AbstractHtmlProcessorTest extends TestCase
             . '|/(?:li|dd|dt|option|optgroup|caption|colgroup|thead|tbody|tfoot|tr|td|th'
             . '|p|dl|h[1-6]|menu|ol|pre|table|ul|address|blockquote|div|fieldset|form))\\\\>%',
             '$0\\n?+',
-            $needleMatcher
+            $needleMatcher,
         );
-        self::assertIsString($needleMatcherWithNewlines);
 
         self::assertMatchesRegularExpression('%' . $needleMatcherWithNewlines . '%', $haystack, $message);
     }
@@ -1276,10 +1349,6 @@ final class AbstractHtmlProcessorTest extends TestCase
     /**
      * Asserts that two HTML strings are equal, allowing for whitespace differences in the HTML element itself (but not
      * its descendants) and after its closing tag.
-     *
-     * @param string $expected
-     * @param string $actual
-     * @param string $message
      */
     private static function assertEqualsHtml(string $expected, string $actual, string $message = ''): void
     {
@@ -1292,14 +1361,10 @@ final class AbstractHtmlProcessorTest extends TestCase
     /**
      * Normalizes whitespace in the HTML element itself (but not its descendants) and after its closing tag, with a
      * single newline inserted or replacing whitespace at positions where whitespace may occur but is superfluous.
-     *
-     * @param string $html
-     *
-     * @return string
      */
     private static function normalizeHtmlElement(string $html): string
     {
-        $normalized = preg_replace(
+        return preg_replace(
             [
                 '%(<html(?=[\\s>])[^>]*+>)\\s*+(<head[\\s>])%',
                 '%(</head>)\\s*+(<body[\\s>])%',
@@ -1307,10 +1372,7 @@ final class AbstractHtmlProcessorTest extends TestCase
                 '%(</html>)\\s*+($)%',
             ],
             "$1\n$2",
-            $html
+            $html,
         );
-        self::assertIsString($normalized);
-
-        return $normalized;
     }
 }

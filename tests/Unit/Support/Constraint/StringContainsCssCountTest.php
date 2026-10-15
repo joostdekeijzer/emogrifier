@@ -7,7 +7,6 @@ namespace Pelago\Emogrifier\Tests\Unit\Support\Constraint;
 use Pelago\Emogrifier\Tests\Support\Constraint\StringContainsCssCount;
 use Pelago\Emogrifier\Tests\Support\Traits\CssDataProviders;
 use Pelago\Emogrifier\Tests\Support\Traits\TestStringConstraint;
-use PHPUnit\Framework\Constraint\Constraint;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -18,11 +17,16 @@ final class StringContainsCssCountTest extends TestCase
     use CssDataProviders;
     use TestStringConstraint;
 
+    protected function setUp(): void
+    {
+        $this->subject = new StringContainsCssCount(0, '');
+    }
+
     /**
      * @test
      *
-     * @param string $needle
-     * @param string $haystack
+     * @param non-empty-string $needle
+     * @param non-empty-string $haystack
      *
      * @dataProvider provideCssNeedleNotFoundInHaystack
      */
@@ -38,8 +42,8 @@ final class StringContainsCssCountTest extends TestCase
     /**
      * @test
      *
-     * @param string $needle
-     * @param string $haystack
+     * @param non-empty-string $needle
+     * @param non-empty-string $haystack
      *
      * @dataProvider provideEquivalentCss
      * @dataProvider provideEquivalentCssInStyleTags
@@ -57,8 +61,8 @@ final class StringContainsCssCountTest extends TestCase
     /**
      * @test
      *
-     * @param string $needle
-     * @param string $haystack
+     * @param non-empty-string $needle
+     * @param non-empty-string $haystack
      *
      * @dataProvider provideEquivalentCss
      * @dataProvider provideEquivalentCssInStyleTags
@@ -76,8 +80,8 @@ final class StringContainsCssCountTest extends TestCase
     /**
      * @test
      *
-     * @param string $needle
-     * @param string $haystack
+     * @param non-empty-string $needle
+     * @param non-empty-string $haystack
      *
      * @dataProvider provideCssNeedleNotFoundInHaystack
      */
@@ -93,8 +97,8 @@ final class StringContainsCssCountTest extends TestCase
     /**
      * @test
      *
-     * @param string $needle
-     * @param string $haystack
+     * @param non-empty-string $needle
+     * @param non-empty-string $haystack
      *
      * @dataProvider provideEquivalentCss
      * @dataProvider provideEquivalentCssInStyleTags
@@ -112,8 +116,8 @@ final class StringContainsCssCountTest extends TestCase
     /**
      * @test
      *
-     * @param string $needle
-     * @param string $haystack
+     * @param non-empty-string $needle
+     * @param non-empty-string $haystack
      *
      * @dataProvider provideEquivalentCss
      * @dataProvider provideEquivalentCssInStyleTags
@@ -131,8 +135,8 @@ final class StringContainsCssCountTest extends TestCase
     /**
      * @test
      *
-     * @param string $needle
-     * @param string $haystack
+     * @param non-empty-string $needle
+     * @param non-empty-string $haystack
      *
      * @dataProvider provideCssNeedleNotFoundInHaystack
      */
@@ -148,9 +152,6 @@ final class StringContainsCssCountTest extends TestCase
     /**
      * @test
      *
-     * @param string $needle
-     * @param string $haystack
-     *
      * @dataProvider provideEquivalentCss
      * @dataProvider provideEquivalentCssInStyleTags
      * @dataProvider provideCssNeedleFoundInLargerHaystack
@@ -162,13 +163,5 @@ final class StringContainsCssCountTest extends TestCase
         $result = $subject->evaluate($haystack, '', true);
 
         self::assertFalse($result);
-    }
-
-    /**
-     * @return Constraint
-     */
-    protected function createSubject(): Constraint
-    {
-        return new StringContainsCssCount(0, '');
     }
 }

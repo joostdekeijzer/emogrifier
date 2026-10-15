@@ -21,8 +21,6 @@ abstract class CssConstraint extends Constraint
     /**
      * This regular expression pattern will match various parts of a string of CSS, and uses capturing groups to clarify
      * what, actually, has been matched.
-     *
-     * @var non-empty-string
      */
     private const CSS_REGULAR_EXPRESSION_PATTERN = '/
         (?<![\\s;}])                        # - `}` as end of declarations rule block, captured in group 1, with
@@ -33,8 +31,12 @@ abstract class CssConstraint extends Constraint
             |\\:(?![^\\{\\}]*+\\{)          #   followed later by `{` without a closing `}` first)
         )\\s*+                              #
         |(^\\s++)                           # - whitespace at the very start, captured in group 3
-        |(>)\\s*+                           # - `>` (e.g. closing a `<style>` element opening tag) with optional
-                                            #   whitespace following, captured in group 4
+        |\\s*+(                             # - selector combinator with optional whitespace around, captured in group
+            [>~+]                           #   4; this may also be a `>` closing a `<style>` tag; the regex is not
+            (?![^\\{\\}\\(\\)]*+\\))        #   sufficiently advanced to determine which, so for the latter case
+        )\\s*+                              #   whitespace before is also allowed; combinators are not matched if there
+                                            #   is a closing bracket coming, so that, e.g. the `+` operator in a
+                                            #   `calc()` function is not matched
         |(\\s++)                            # - whitespace, captured in group 5
         |(\\#[0-9A-Fa-f]++\\b)              # - RGB colour property value, captured in group 6, if in a declarations
             (?![^\\{\\}]*+\\{)              #   block (i.e. not followed later by `{` without a closing `}` first)
@@ -73,6 +75,10 @@ abstract class CssConstraint extends Constraint
                     |\\:(?![^\\{\\}]*+\\{)  #
                 )                           #
                 |\\s                        #
+                |\\s*+(                     #
+                    [>~+]                   #
+                    (?![^\\{\\}\\(\\)]*+\\))#
+                )\\s*+                      #
                 |(\\#[0-9A-Fa-f]++\\b)      #
                     (?![^\\{\\}]*+\\{)      #
                 |@(?i:import)\\s++          #
@@ -102,28 +108,20 @@ abstract class CssConstraint extends Constraint
         )++                                 #
     /x';
 
-    /**
-     * @var non-empty-string
-     */
     private const URL_REPLACEMENT_MATCHER = '(?:([\'"]?+)$8$10\\g{-1})';
 
-    /**
-     * @var non-empty-string
-     */
     private const AT_IMPORT_URL_REPLACEMENT_MATCHER = '@(?i:import)\\s++(?:' . self::URL_REPLACEMENT_MATCHER
         . '|url\\(\\s*+' . self::URL_REPLACEMENT_MATCHER . '\\s*+\\))';
 
     /**
      * Regular expression replacements for parts of the CSS matched by {@see CSS_REGULAR_EXPRESSION_PATTERN}, indexed by
      * capturing group upon which capturing a non-empty string means the corresponding replacement should be selected.
-     *
-     * @var array<int<1, 16>, non-empty-string>
      */
     private const CSS_REGULAR_EXPRESSION_REPLACEMENTS = [
         1 => '(?:\\s*+;)?+\\s*+$1\\s*+',
         2 => '\\s*+$2\\s*+',
         3 => '\\s*+',
-        4 => '$4\\s*+',
+        4 => '\\s*+$4\\s*+',
         5 => '\\s++',
         6 => '(?i:$6)',
         8 => self::AT_IMPORT_URL_REPLACEMENT_MATCHER,
@@ -140,8 +138,6 @@ abstract class CssConstraint extends Constraint
      * `\s++`.
      * It matches the end of the string, and optionally preceding whitespace or a semicolon surrounded by optional
      * whitespace, provided that what precedes is not a semicolon or whitespace.
-     *
-     * @var non-empty-string
      */
     private const OPTIONAL_TRAILING_SEMICOLON_MATCHER_PATTERN
         = '/(?<!;)(?<!\\\\s[\\+\\*]\\+)(?:\\\\s\\*\\+;\\\\s\\*\\+|\\\\s\\+\\+)?+$/';
@@ -161,8 +157,6 @@ abstract class CssConstraint extends Constraint
      * away from the main tests, also allowing their test data to be written more humanly-readable with additional
      * whitespace.
      *
-     * @param string $css
-     *
      * @return string Slashes (`/`) should be used as delimiters in the pattern composed using this.
      */
     protected static function getCssRegularExpressionMatcher(string $css): string
@@ -171,10 +165,11 @@ abstract class CssConstraint extends Constraint
             /** @var array<int<0, max>, string> $matches */
             return self::getCssRegularExpressionReplacement($matches);
         };
-        // The safe version is only available in "thecodingmachine/safe" for PHP >= 8.1.
         if (\function_exists('Safe\\preg_replace_callback')) {
             $matcher = preg_replace_callback(self::CSS_REGULAR_EXPRESSION_PATTERN, $callback, $css);
         } else {
+            // The safe version is only available in "thecodingmachine/safe" for PHP >= 8.1.
+            // @phpstan-ignore theCodingMachineSafe.function
             $matcher = \preg_replace_callback(self::CSS_REGULAR_EXPRESSION_PATTERN, $callback, $css);
         }
         \assert(\is_string($matcher));
@@ -193,14 +188,18 @@ abstract class CssConstraint extends Constraint
 
         $pattern = '/\\$(\\d++)/';
         $callback = static function (array $referenceMatches) use ($matches): string {
-            return \preg_quote($matches[(int) $referenceMatches[1]] ?? '', '/');
+            $index = $referenceMatches[1];
+            \assert(\is_string($index));
+
+            return \preg_quote($matches[$index] ?? '', '/');
         };
         foreach (self::CSS_REGULAR_EXPRESSION_REPLACEMENTS as $index => $replacement) {
             if (($matches[$index] ?? '') !== '') {
-                // The safe version is only available in "thecodingmachine/safe" for PHP >= 8.1.
                 if (\function_exists('Safe\\preg_replace_callback')) {
                     $regularExpressionEquivalent = preg_replace_callback($pattern, $callback, $replacement);
                 } else {
+                    // The safe version is only available in "thecodingmachine/safe" for PHP >= 8.1.
+                    // @phpstan-ignore theCodingMachineSafe.function
                     $regularExpressionEquivalent = \preg_replace_callback($pattern, $callback, $replacement);
                 }
                 \assert(\is_string($regularExpressionEquivalent));
@@ -229,14 +228,11 @@ abstract class CssConstraint extends Constraint
     {
         $isPropertyDeclarationsOnly = \strpos($css, ':') !== false && preg_match('/[@\\{\\}]/', $css) === 0;
         if ($isPropertyDeclarationsOnly) {
-            $result = preg_replace(
+            return preg_replace(
                 self::OPTIONAL_TRAILING_SEMICOLON_MATCHER_PATTERN,
                 '(?:\\s*+;)?+',
-                $matcher
+                $matcher,
             );
-            \assert(\is_string($result));
-
-            return $result;
         }
 
         return $matcher;
