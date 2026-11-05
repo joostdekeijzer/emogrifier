@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pelago\Emogrifier\HtmlProcessor;
 
+use Pelago\Emogrifier\Utilities\DeclarationBlockParser;
 use Pelago\Emogrifier\Utilities\Preg;
 
 /**
@@ -54,6 +55,13 @@ abstract class AbstractHtmlProcessor
     protected $xPath;
 
     /**
+     * Parses CSS declaration blocks for this processor instance.
+     *
+     * @var DeclarationBlockParser|null
+     */
+    private $declarationBlockParser;
+
+    /**
      * The constructor.
      *
      * Please use `::fromHtml` or `::fromDomDocument` instead.
@@ -71,7 +79,6 @@ abstract class AbstractHtmlProcessor
      */
     public static function fromHtml(string $unprocessedHtml): self
     {
-        // @phpstan-ignore identical.alwaysFalse (We're checking for a contract violation here.)
         if ($unprocessedHtml === '') {
             throw new \InvalidArgumentException('The provided HTML must not be empty.', 1515763647);
         }
@@ -99,6 +106,18 @@ abstract class AbstractHtmlProcessor
         \assert($instance->xPath instanceof \DOMXPath);
 
         return $instance;
+    }
+
+    /**
+     * Returns the parser for CSS declaration blocks, creating it on first use.
+     */
+    protected function getDeclarationBlockParser(): DeclarationBlockParser
+    {
+        if (!($this->declarationBlockParser instanceof DeclarationBlockParser)) {
+            $this->declarationBlockParser = new DeclarationBlockParser();
+        }
+
+        return $this->declarationBlockParser;
     }
 
     /**
